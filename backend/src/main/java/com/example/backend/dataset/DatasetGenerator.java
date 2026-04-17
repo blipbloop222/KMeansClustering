@@ -1,4 +1,4 @@
-package dataset;
+package com.example.backend.dataset;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,10 +35,10 @@ public class DatasetGenerator {
 
         //generate points around centroids
         for (int i = 0; i < n; i++) {
-            int cluster = rand.nextInt(k);
+            int cluster = r.nextInt(k);
 
             for (int j = 0; j < d; j++) {
-                data[i][j] = centroids[cluster][j] + rand.nextGaussian() * 50;
+                data[i][j] = centroids[cluster][j] + r.nextGaussian() * 50;
             }
         }
 
