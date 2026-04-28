@@ -1,5 +1,6 @@
 package com.example.backend.experiment;
 
+import com.example.backend.clustering.concurrent.KMeansConcurrent;
 import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.clustering.parallel.KMeansParallel;
 import com.example.backend.dataset.DatasetGenerator;
@@ -14,7 +15,12 @@ public class MainApp {
         System.out.println("Sequential K-Means Clustering:");
         KMeansSequential.Result seqResult = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
         printClusteringResults(seqResult, "Sequential");
-        
+
+        // Demonstrate Concurrent Clustering
+        System.out.println("\nConcurrent K-Means Clustering");
+        KMeansSequential.Result concurrentResult = KMeansConcurrent.cluster(data, 3, 300, 1e-6, 42L);
+        printClusteringResults(concurrentResult, "Concurrent");
+
         // Demonstrate Parallel Clustering
         System.out.println("\nParallel K-Means Clustering:");
         KMeansSequential.Result parallelResult = KMeansParallel.cluster(data, 3, 300, 1e-6, 42L);
