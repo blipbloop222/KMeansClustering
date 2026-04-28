@@ -1,4 +1,4 @@
-package com.example.backend.clustering;
+package com.example.backend.clustering.sequential;
 
 import java.util.ArrayList;
 import java.util.Collections;
