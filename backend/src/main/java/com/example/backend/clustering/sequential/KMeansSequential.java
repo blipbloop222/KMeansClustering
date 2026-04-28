@@ -96,8 +96,7 @@ public final class KMeansSequential {
         }
     }
 
-    private static void accumulateCentroids(
-            double[][] data, int n, int d, int[] labels, double[][] sums, int[] counts) {
+    private static void accumulateCentroids(double[][] data, int n, int d, int[] labels, double[][] sums, int[] counts) {
         for (int i = 0; i < n; i++) {
             int c = labels[i];
             counts[c]++;

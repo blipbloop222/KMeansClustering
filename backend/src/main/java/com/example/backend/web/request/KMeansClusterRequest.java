@@ -1,7 +1,8 @@
-package com.example.backend.web;
+package com.example.backend.web.request;
 
 import com.example.backend.clustering.core.KMeansCore;
 import com.example.backend.utils.ErrorHandler;
+
 import java.util.Objects;
 
 /**

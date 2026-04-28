@@ -1,51 +1,86 @@
 package com.example.backend.experiment;
 
 import com.example.backend.clustering.concurrent.KMeansConcurrent;
-import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.clustering.parallel.KMeansParallel;
+import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.dataset.DatasetGenerator;
-import java.util.Arrays;
 
 public class MainApp {
     public static void main(String[] args) {
-        // Generate a clustered dataset
-        double[][] data = DatasetGenerator.generateClustered(1000, 2, 3, 42L);
-        
-        // Demonstrate Sequential Clustering
-        System.out.println("Sequential K-Means Clustering:");
-        KMeansSequential.Result seqResult = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
-        printClusteringResults(seqResult, "Sequential");
 
-        // Demonstrate Concurrent Clustering
-        System.out.println("\nConcurrent K-Means Clustering");
-        KMeansSequential.Result concurrentResult = KMeansConcurrent.cluster(data, 3, 300, 1e-6, 42L);
-        printClusteringResults(concurrentResult, "Concurrent");
+        int n = 100000;
+        int d = 5;
+        int k = 5;
+        long seed = 42L;
 
-        // Demonstrate Parallel Clustering
-        System.out.println("\nParallel K-Means Clustering:");
-        KMeansSequential.Result parallelResult = KMeansParallel.cluster(data, 3, 300, 1e-6, 42L);
-        printClusteringResults(parallelResult, "Parallel");
+        System.out.println("Generating dataset...");
+        double[][] data = DatasetGenerator.generateClustered(n, d, k, seed);
+
+        runSequential(data, k, seed);
+        runConcurrent(data, k, seed);
+        runParallel(data, k, seed);
     }
-    
-    private static void printClusteringResults(KMeansSequential.Result result, String type) {
-        System.out.println("Clustering Algorithm: " + type);
-        System.out.println("Number of Iterations: " + result.iterations());
-        System.out.println("Inertia: " + result.inertia());
-        
-        System.out.println("\nCentroids:");
-        for (int i = 0; i < result.centroids().length; i++) {
-            System.out.println("Cluster " + i + ": " + Arrays.toString(result.centroids()[i]));
-        }
-        
-        // Count points in each cluster
-        int[] clusterCounts = new int[result.centroids().length];
-        for (int label : result.labels()) {
-            clusterCounts[label]++;
-        }
-        
-        System.out.println("\nCluster Sizes:");
-        for (int i = 0; i < clusterCounts.length; i++) {
-            System.out.println("Cluster " + i + ": " + clusterCounts[i] + " points");
-        }
+
+    private static void runSequential(double[][] data, int k, long seed) {
+
+        long start = System.nanoTime();
+
+        KMeansSequential.Result result =
+                KMeansSequential.cluster(data, k, 300, 1e-6, seed);
+
+        long end = System.nanoTime();
+
+        printSummary(
+                "Sequential",
+                result.iterations(),
+                result.inertia(),
+                (end - start) / 1_000_000
+        );
+    }
+
+    private static void runConcurrent(double[][] data, int k, long seed) {
+
+        long start = System.nanoTime();
+
+        KMeansSequential.Result result =
+                KMeansConcurrent.cluster(data, k, 300, 1e-6, seed);
+
+        long end = System.nanoTime();
+
+        printSummary(
+                "Concurrent",
+                result.iterations(),
+                result.inertia(),
+                (end - start) / 1_000_000
+        );
+    }
+
+    private static void runParallel(double[][] data, int k, long seed) {
+
+        long start = System.nanoTime();
+
+        KMeansSequential.Result result =
+                KMeansParallel.cluster(data, k, 300, 1e-6, seed);
+
+        long end = System.nanoTime();
+
+        printSummary(
+                "Parallel",
+                result.iterations(),
+                result.inertia(),
+                (end - start) / 1_000_000
+        );
+    }
+
+    private static void printSummary(
+            String algorithm,
+            int iterations,
+            double inertia,
+            long executionTimeMs) {
+
+        System.out.println("\n=== " + algorithm + " K-Means ===");
+        System.out.println("Iterations      : " + iterations);
+        System.out.println("Inertia         : " + inertia);
+        System.out.println("Execution Time  : " + executionTimeMs + " ms");
     }
 }

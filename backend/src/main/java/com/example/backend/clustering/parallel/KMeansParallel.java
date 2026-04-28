@@ -10,9 +10,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 public final class KMeansParallel {
+
+    private KMeansParallel() {}
     /**
      * Performs K-Means clustering using a parallel approach.
      * 
@@ -23,13 +25,7 @@ public final class KMeansParallel {
      * @param seed Random seed
      * @return Clustering result with centroids, labels, iterations, and inertia
      */
-    public static KMeansSequential.Result cluster(
-            double[][] data, 
-            int k, 
-            int maxIter, 
-            double tol, 
-            long seed) {
-        
+    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {        
         // Initial validation
         if (data == null || data.length == 0) {
             throw new IllegalArgumentException("data must be non-empty");
@@ -57,25 +53,32 @@ public final class KMeansParallel {
         int iter = 0;
         boolean converged = false;
 
-        for (; iter < maxIter && !converged; iter++) {
-            // Parallel label assignment
-            assignLabelsParallel(data, n, d, k, centroids, labels);
+        int numThreads = Runtime.getRuntime().availableProcessors();
+        //create thread pool once
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
-            // Compute new centroids
-            double[][] newCentroids = new double[k][d];
-            int[] counts = new int[k];
-            accumulateCentroidsParallel(data, n, d, labels, newCentroids, counts);
-            
-            repairEmptyClusters(data, n, d, k, rnd, newCentroids, counts);
-            finalizeCentroids(newCentroids, counts, d);
+        try {
+            while (iter < maxIter && !converged) {
+                // Parallel label assignment
+                assignLabelsParallel(executor, numThreads, data, n, d, k, centroids, labels);
 
-            converged = centroidsMovedLessThan(centroids, newCentroids, k, d, tol);
-            centroids = newCentroids;
+                // Compute new centroids
+                double[][] newCentroids = new double[k][d];
+                int[] counts = new int[k];
+                accumulateCentroidsParallel(executor, numThreads, data, n, d, labels, newCentroids, counts);
+                repairEmptyClusters(data, n, d, k, rnd, newCentroids, counts);
+                finalizeCentroids(newCentroids, counts, d);
+
+                converged = centroidsMovedLessThan(centroids, newCentroids, k, d, tol);
+                centroids = newCentroids;
+                iter++;
+            }
+            assignLabelsParallel(executor, numThreads, data, n, d, k, centroids, labels);
+        } finally {
+            executor.shutdown();
         }
 
-        assignLabelsParallel(data, n, d, k, centroids, labels);
         double inertia = computeInertia(data, n, d, centroids, labels);
-
         return new KMeansSequential.Result(centroids, labels, iter, inertia);
     }
 
@@ -101,19 +104,19 @@ public final class KMeansParallel {
     /**
      * Parallel label assignment.
      */
-    private static void assignLabelsParallel(
+    private static void assignLabelsParallel(ExecutorService executor, int numThreads,
             double[][] data, int n, int d, int k, 
             double[][] centroids, int[] labels) {
-        int numThreads = Runtime.getRuntime().availableProcessors();
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        
         int chunkSize = n / numThreads;
+        List<Future<?>> futures = new ArrayList<>();
         
         for (int t = 0; t < numThreads; t++) {
             final int start = t * chunkSize;
             final int end = (t == numThreads - 1) ? n : start + chunkSize;
-            
-            executor.submit(() -> {
+            if (start >= end) {
+                continue;
+            }
+            futures.add(executor.submit(() -> {
                 for (int i = start; i < end; i++) {
                     int best = 0;
                     double bestDist = squaredDist(data[i], centroids[0], d);
@@ -126,34 +129,40 @@ public final class KMeansParallel {
                     }
                     labels[i] = best;
                 }
-            });
+            }));
         }
-        
-        executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.HOURS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Parallel label assignment interrupted", e);
-        }
+        waitForTasks(futures);
     }
 
+    private static void waitForTasks(List<Future<?>> futures) {
+        try {
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Parallel execution interrupted", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Parallel execution failed", e);
+        }
+    }
     /**
      * Parallel centroid accumulation.
      */
-    private static void accumulateCentroidsParallel(
+    private static void accumulateCentroidsParallel(ExecutorService executor, int numThreads,
             double[][] data, int n, int d, int[] labels, 
             double[][] sums, int[] counts) {
-        int numThreads = Runtime.getRuntime().availableProcessors();
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        
+                
         int chunkSize = n / numThreads;
-        
+        List<Future<?>> futures = new ArrayList<>();
         for (int t = 0; t < numThreads; t++) {
             final int start = t * chunkSize;
             final int end = (t == numThreads - 1) ? n : start + chunkSize;
-            
-            executor.submit(() -> {
+            if (start >= end) {
+                continue;
+            }
+
+            futures.add(executor.submit(() -> {
                 double[][] localSums = new double[sums.length][d];
                 int[] localCounts = new int[sums.length];
                 
@@ -174,16 +183,10 @@ public final class KMeansParallel {
                         }
                     }
                 }
-            });
+            }));
         }
         
-        executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.HOURS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Parallel centroid accumulation interrupted", e);
-        }
+        waitForTasks(futures);
     }
 
     /**
@@ -216,8 +219,7 @@ public final class KMeansParallel {
     /**
      * Check if centroids have converged.
      */
-    private static boolean centroidsMovedLessThan(
-            double[][] prev, double[][] next, int k, int d, double tol) {
+    private static boolean centroidsMovedLessThan(double[][] prev, double[][] next, int k, int d, double tol) {
         double tolSq = tol * tol;
         for (int c = 0; c < k; c++) {
             if (squaredDist(prev[c], next[c], d) > tolSq) {
@@ -231,19 +233,18 @@ public final class KMeansParallel {
      * Compute squared distance.
      */
     private static double squaredDist(double[] a, double[] b, int d) {
-        double s = 0;
+        double sum = 0;
         for (int j = 0; j < d; j++) {
-            double t = a[j] - b[j];
-            s += t * t;
+            double diff = a[j] - b[j];
+            sum += diff * diff;
         }
-        return s;
+        return sum;
     }
 
     /**
      * Compute inertia.
      */
-    private static double computeInertia(
-            double[][] data, int n, int d, double[][] centroids, int[] labels) {
+    private static double computeInertia(double[][] data, int n, int d, double[][] centroids, int[] labels) {
         double sum = 0;
         for (int i = 0; i < n; i++) {
             sum += squaredDist(data[i], centroids[labels[i]], d);

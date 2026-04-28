@@ -1,4 +1,4 @@
-package com.example.backend.web;
+package com.example.backend.service;
 
 import com.example.backend.clustering.core.KMeansCore;
 import com.example.backend.clustering.sequential.KMeansSequential;
@@ -6,16 +6,16 @@ import com.example.backend.clustering.parallel.KMeansParallel;
 import com.example.backend.clustering.concurrent.KMeansConcurrent;
 import com.example.backend.dataset.DatasetGenerator;
 import com.example.backend.utils.ErrorHandler;
+import com.example.backend.web.request.GenerateDatasetSpec;
+import com.example.backend.web.request.KMeansClusterRequest;
+import com.example.backend.web.response.KMeansClusterResponse;
 
 import org.springframework.stereotype.Service;
 
 @Service
 public class KMeansClusteringService {
     
-    private KMeansClusterResponse processClusteringRequest(
-            KMeansClusterRequest request, 
-            ClusteringAlgorithm clusteringAlgorithm) {
-        
+    private KMeansClusterResponse processClusteringRequest(KMeansClusterRequest request, ClusteringAlgorithm clusteringAlgorithm) {
         // Validate input parameters
         validateClusteringRequest(request);
         
@@ -24,19 +24,24 @@ public class KMeansClusteringService {
         
         // Extract clustering parameters with defaults
         long seed = request.seed() != null ? request.seed() : KMeansCore.DEFAULT_SEED;
-        int maxIter = request.maxIterations() != null ? 
-            request.maxIterations() : KMeansCore.DEFAULT_MAX_ITERATIONS;
-        double tol = request.tolerance() != null ? 
-            request.tolerance() : KMeansCore.DEFAULT_TOLERANCE;
+        int maxIter = request.maxIterations() != null ? request.maxIterations() : KMeansCore.DEFAULT_MAX_ITERATIONS;
+        double tol = request.tolerance() != null ? request.tolerance() : KMeansCore.DEFAULT_TOLERANCE;
         
         // Perform clustering
+        long start = System.nanoTime();
+
         KMeansSequential.Result result = clusteringAlgorithm.cluster(data, request.k(), maxIter, tol, seed);
+
+        long end = System.nanoTime();
+
+        long executionTimeMs = (end - start) / 1_000_000;
         
         return new KMeansClusterResponse(
             result.centroids(),
             result.labels(),
             result.iterations(),
             result.inertia(),
+            executionTimeMs,
             data.length,
             data[0].length
         );
