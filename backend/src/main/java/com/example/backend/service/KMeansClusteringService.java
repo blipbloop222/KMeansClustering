@@ -4,9 +4,8 @@ import com.example.backend.clustering.core.KMeansCore;
 import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.clustering.parallel.KMeansParallel;
 import com.example.backend.clustering.concurrent.KMeansConcurrent;
-import com.example.backend.dataset.DatasetGenerator;
+import com.example.backend.dataset.DatasetLoader;
 import com.example.backend.utils.ErrorHandler;
-import com.example.backend.web.request.GenerateDatasetSpec;
 import com.example.backend.web.request.KMeansClusterRequest;
 import com.example.backend.web.response.KMeansClusterResponse;
 
@@ -16,11 +15,13 @@ import org.springframework.stereotype.Service;
 public class KMeansClusteringService {
     
     private KMeansClusterResponse processClusteringRequest(KMeansClusterRequest request, ClusteringAlgorithm clusteringAlgorithm) {
-        // Validate input parameters
         validateClusteringRequest(request);
-        
-        // Resolve data points
+
         double[][] data = resolveData(request);
+
+        if (request.k() > data.length) {
+            ErrorHandler.handleInvalidArgument("Number of clusters cannot exceed number of points (" + data.length + ")");
+        }
         
         // Extract clustering parameters with defaults
         long seed = request.seed() != null ? request.seed() : KMeansCore.DEFAULT_SEED;
@@ -100,49 +101,12 @@ public class KMeansClusteringService {
         }
     }
     
-    /**
-     * Resolves the input data points for clustering.
-     * 
-     * @param request Clustering request
-     * @return Resolved data points
-     * @throws IllegalArgumentException if data resolution fails
-     */
     private static double[][] resolveData(KMeansClusterRequest request) {
-        boolean hasPoints = request.points() != null && request.points().length > 0;
-        boolean hasGenerate = request.generate() != null;
-        
-        // Validate data source
-        if (hasPoints && hasGenerate) {
-            ErrorHandler.handleInvalidArgument("Provide only one of \"points\" or \"generate\"");
+        double[][] data = DatasetLoader.loadCSV(request.datasetFilePath());
+        if (data == null || data.length == 0) {
+            ErrorHandler.handleInvalidArgument("Failed to load dataset from: " + request.datasetFilePath());
         }
-        if (!hasPoints && !hasGenerate) {
-            ErrorHandler.handleInvalidArgument("Provide either \"points\" or \"generate\"");
-        }
-        
-        // Generate dataset if requested
-        if (hasGenerate) {
-            GenerateDatasetSpec g = request.generate();
-            
-            // Validate generation parameters
-            if (g.n() < 1) {
-                ErrorHandler.handleInvalidArgument("generate.n must be at least 1");
-            }
-            if (g.dimensions() < 1) {
-                ErrorHandler.handleInvalidArgument("generate.dimensions must be at least 1");
-            }
-            if (g.generatorClusters() < 1) {
-                ErrorHandler.handleInvalidArgument("generate.generatorClusters must be at least 1");
-            }
-            
-            return DatasetGenerator.generateClustered(
-                g.n(), 
-                g.dimensions(), 
-                g.generatorClusters(), 
-                request.seed() != null ? request.seed() : KMeansCore.DEFAULT_SEED
-            );
-        }
-        
-        return request.points();
+        return data;
     }
     
     /**
