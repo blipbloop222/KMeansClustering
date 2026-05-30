@@ -1,17 +1,6 @@
-// package com.example.backend.model;
-
-// public class Point {
-//     public double[] values;
-//     public int cluster;
-
-//     public Point(double[] values) {
-//         this.values = values;
-//     }
-// }
 package com.example.backend.model;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Represents a point in a multi-dimensional space with input validation.
