@@ -21,7 +21,7 @@ public class KagglePreprocessor {
     public static void processWalmartData(String rawCsvPath, String outputCsvPath) {
         Map<String, CustomerRecord> customers = new HashMap<>();
         
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy"); 
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE; // yyyy-MM-dd
         LocalDate maxDateInDataset = LocalDate.MIN;
 
         System.out.println("Reading raw Walmart dataset...");

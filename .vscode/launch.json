@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Benchmark (MainApp)",
+            "request": "launch",
+            "mainClass": "com.example.backend.experiment.MainApp",
+            "projectName": "backend",
+            "cwd": "${workspaceFolder}/backend",
+            "vmArgs": "-Xmx4g -Xms512m"
+        },
+        {
+            "type": "java",
+            "name": "Generate Datasets (DatasetMain)",
+            "request": "launch",
+            "mainClass": "com.example.backend.dataset.DatasetMain",
+            "projectName": "backend",
+            "cwd": "${workspaceFolder}/backend"
+        },
+        {
+            "type": "java",
+            "name": "Run Spring Boot (BackendApplication)",
+            "request": "launch",
+            "mainClass": "com.example.backend.BackendApplication",
+            "projectName": "backend",
+            "cwd": "${workspaceFolder}/backend",
+            "vmArgs": "-Xmx2g"
+        }
+    ]
+}

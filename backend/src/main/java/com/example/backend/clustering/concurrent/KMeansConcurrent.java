@@ -20,6 +20,10 @@ public final class KMeansConcurrent {
      * @return Clustering result with centroids, labels, iterations, and inertia
      */
     public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
+        return cluster(data, k, maxIter, tol, seed, Runtime.getRuntime().availableProcessors());
+    }
+
+    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int numThreads) {
         // ------------------------------------------------------------------
         // Validation
         // ------------------------------------------------------------------
@@ -47,7 +51,7 @@ public final class KMeansConcurrent {
         double[][] centroids = initializeCentroids(data, k, rnd);
         final int[] labels = new int[n];
 
-        final int numThreads = Runtime.getRuntime().availableProcessors();
+        if (numThreads < 1) throw new IllegalArgumentException("numThreads must be at least 1");
 
         // Synchronized state updated by the barrier and safely read by workers in the subsequent phase.
         final SharedState state = new SharedState(k, d, tol, maxIter);
