@@ -11,13 +11,15 @@ import com.example.backend.utils.ErrorHandler;
  * @param maxIterations Maximum number of iterations (optional, defaults to standard value)
  * @param tolerance Convergence tolerance (optional, defaults to standard value)
  * @param datasetFilePath Path to the CSV dataset file to load
+ * @param threads Thread count for parallel/concurrent (optional, defaults to available processors)
  */
 public record KMeansClusterRequest(
         int k,
         Long seed,
         Integer maxIterations,
         Double tolerance,
-        String datasetFilePath) {
+        String datasetFilePath,
+        Integer threads) {
 
     public KMeansClusterRequest {
         if (k < 1) {
@@ -26,13 +28,17 @@ public record KMeansClusterRequest(
         if (datasetFilePath == null || datasetFilePath.isBlank()) {
             ErrorHandler.handleInvalidArgument("datasetFilePath must be provided");
         }
+        if (threads != null && threads < 1) {
+            ErrorHandler.handleInvalidArgument("threads must be at least 1");
+        }
 
         seed = seed != null ? seed : System.currentTimeMillis();
         maxIterations = maxIterations != null ? maxIterations : KMeansCore.DEFAULT_MAX_ITERATIONS;
         tolerance = tolerance != null ? tolerance : KMeansCore.DEFAULT_TOLERANCE;
+        threads = threads != null ? threads : Runtime.getRuntime().availableProcessors();
     }
 
     public KMeansClusterRequest withSeed(long newSeed) {
-        return new KMeansClusterRequest(k, newSeed, maxIterations, tolerance, datasetFilePath);
+        return new KMeansClusterRequest(k, newSeed, maxIterations, tolerance, datasetFilePath, threads);
     }
 }
