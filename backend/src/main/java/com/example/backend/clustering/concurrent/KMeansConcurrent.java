@@ -1,7 +1,6 @@
 package com.example.backend.clustering.concurrent;
 
 import com.example.backend.clustering.core.KMeansCore;
-import com.example.backend.clustering.sequential.KMeansSequential;
 
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
@@ -19,11 +18,11 @@ public final class KMeansConcurrent {
      * @param seed Random seed
      * @return Clustering result with centroids, labels, iterations, and inertia
      */
-    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
         return cluster(data, k, maxIter, tol, seed, Runtime.getRuntime().availableProcessors());
     }
 
-    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int numThreads) {
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int numThreads) {
         // ------------------------------------------------------------------
         // Validation
         // ------------------------------------------------------------------
@@ -180,7 +179,7 @@ public final class KMeansConcurrent {
         // ------------------------------------------------------------------
         double inertia = computeInertia(data, n, d, state.centroids, labels);
 
-        return new KMeansSequential.Result(state.centroids, labels, state.iterations, inertia);
+        return new KMeansCore.Result(state.centroids, labels, state.iterations, inertia);
     }
 
     // =========================================================================

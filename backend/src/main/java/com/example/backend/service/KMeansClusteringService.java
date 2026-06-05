@@ -31,7 +31,7 @@ public class KMeansClusteringService {
         // Perform clustering
         long start = System.nanoTime();
 
-        KMeansSequential.Result result = clusteringAlgorithm.cluster(
+        KMeansCore.Result result = clusteringAlgorithm.cluster(
                 data, request.k(), maxIter, tol, seed, request.threads());
 
         long end = System.nanoTime();
@@ -118,6 +118,6 @@ public class KMeansClusteringService {
      */
     @FunctionalInterface
     private interface ClusteringAlgorithm {
-        KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int threads);
+        KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int threads);
     }
 }

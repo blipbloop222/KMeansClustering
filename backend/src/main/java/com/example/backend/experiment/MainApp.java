@@ -1,6 +1,7 @@
 package com.example.backend.experiment;
 
 import com.example.backend.clustering.concurrent.KMeansConcurrent;
+import com.example.backend.clustering.core.KMeansCore;
 import com.example.backend.clustering.parallel.KMeansParallel;
 import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.dataset.DatasetLoader;
@@ -132,14 +133,14 @@ public class MainApp {
     }
 
     private static void benchmark(String dataset, String algo, int threads,
-                                   Supplier<KMeansSequential.Result> task) {
+                                   Supplier<KMeansCore.Result> task) {
         Runtime rt = Runtime.getRuntime();
         System.gc();
         long memBefore = rt.totalMemory() - rt.freeMemory();
         long startNs   = System.nanoTime();
 
         CpuSample cpu;
-        KMeansSequential.Result result;
+        KMeansCore.Result result;
         if (OS_BEAN != null) {
             var measured = runWithCpuSampling(task);
             result = measured.result();
@@ -156,13 +157,13 @@ public class MainApp {
                 dataset, algo, threads, timeMs, memDeltaMb, cpu.formatAvg(), result.iterations());
     }
 
-    private record MeasuredRun(KMeansSequential.Result result, CpuSample cpu) {}
+    private record MeasuredRun(KMeansCore.Result result, CpuSample cpu) {}
 
     /**
      * Polls {@link com.sun.management.OperatingSystemMXBean#getProcessCpuLoad()} while the
      * benchmark task runs. Returns average and peak load as a percentage of total system capacity.
      */
-    private static MeasuredRun runWithCpuSampling(Supplier<KMeansSequential.Result> task) {
+    private static MeasuredRun runWithCpuSampling(Supplier<KMeansCore.Result> task) {
         List<Double> samples = new ArrayList<>();
         AtomicBoolean running = new AtomicBoolean(true);
 
@@ -183,7 +184,7 @@ public class MainApp {
         sampler.setDaemon(true);
         sampler.start();
 
-        KMeansSequential.Result result = task.get();
+        KMeansCore.Result result = task.get();
 
         running.set(false);
         try {

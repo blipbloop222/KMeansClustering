@@ -1,5 +1,7 @@
 package com.example.backend.clustering.sequential;
 
+import com.example.backend.clustering.core.KMeansCore;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,12 +12,10 @@ import java.util.Set;
 
 public final class KMeansSequential {
 
-    public record Result(double[][] centroids, int[] labels, int iterations, double inertia) {}
-
     private KMeansSequential() {}
 
 
-    public static Result cluster(double[][] data, int k, long seed) {
+    public static KMeansCore.Result cluster(double[][] data, int k, long seed) {
         return cluster(data, k, 300, 1e-6, seed);
     }
 
@@ -25,7 +25,7 @@ public final class KMeansSequential {
      * @param maxIter maximum Lloyd iterations
      * @param tol convergence when every centroid moves less than this (Euclidean) in one iteration
      */
-    public static Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
         if (data == null || data.length == 0) {
             throw new IllegalArgumentException("data must be non-empty");
         }
@@ -63,7 +63,7 @@ public final class KMeansSequential {
 
         assignLabels(data, n, d, k, centroids, labels);
         double inertia = computeInertia(data, n, d, centroids, labels);
-        return new Result(centroids, labels, iter, inertia);
+        return new KMeansCore.Result(centroids, labels, iter, inertia);
     }
 
     private static double[][] initCentroids(double[][] data, int n, int d, int k, Random rnd) {
