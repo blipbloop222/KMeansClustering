@@ -7,8 +7,9 @@ import java.util.Random;
  * Provides common utility methods and constants for clustering implementations.
  */
 public final class KMeansCore {
-    // Private constructor to prevent instantiation
     private KMeansCore() {}
+
+    public record Result(double[][] centroids, int[] labels, int iterations, double inertia) {}
 
     /**
      * Default maximum iterations for clustering algorithm.

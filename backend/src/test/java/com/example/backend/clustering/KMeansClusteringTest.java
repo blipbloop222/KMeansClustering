@@ -1,5 +1,6 @@
 package com.example.backend.clustering;
 
+import com.example.backend.clustering.core.KMeansCore;
 import com.example.backend.clustering.sequential.KMeansSequential;
 import com.example.backend.clustering.parallel.KMeansParallel;
 import com.example.backend.dataset.DatasetGenerator;
@@ -14,7 +15,7 @@ public class KMeansClusteringTest {
         double[][] data = DatasetGenerator.generateClustered(100, 2, 3, 42L);
         
         // Perform clustering
-        KMeansSequential.Result result = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
+        KMeansCore.Result result = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
         
         // Basic assertions
         assertNotNull(result, "Clustering result should not be null");
@@ -30,7 +31,7 @@ public class KMeansClusteringTest {
         double[][] data = DatasetGenerator.generateClustered(100, 2, 3, 42L);
         
         // Perform clustering
-        KMeansSequential.Result result = KMeansParallel.cluster(data, 3, 300, 1e-6, 42L);
+        KMeansCore.Result result = KMeansParallel.cluster(data, 3, 300, 1e-6, 42L);
         
         // Basic assertions
         assertNotNull(result, "Clustering result should not be null");
@@ -69,8 +70,8 @@ public class KMeansClusteringTest {
         double[][] data = DatasetGenerator.generateClustered(100, 2, 3, 42L);
         
         // Run multiple times with same seed
-        KMeansSequential.Result result1 = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
-        KMeansSequential.Result result2 = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
+        KMeansCore.Result result1 = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
+        KMeansCore.Result result2 = KMeansSequential.cluster(data, 3, 300, 1e-6, 42L);
         
         // Compare results
         assertArrayEquals(result1.centroids(), result2.centroids(), "Centroids should be identical with same seed");

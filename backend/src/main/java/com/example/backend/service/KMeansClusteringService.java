@@ -31,7 +31,8 @@ public class KMeansClusteringService {
         // Perform clustering
         long start = System.nanoTime();
 
-        KMeansSequential.Result result = clusteringAlgorithm.cluster(data, request.k(), maxIter, tol, seed);
+        KMeansCore.Result result = clusteringAlgorithm.cluster(
+                data, request.k(), maxIter, tol, seed, request.threads());
 
         long end = System.nanoTime();
 
@@ -55,9 +56,10 @@ public class KMeansClusteringService {
      * @return Clustering results
      */
     public KMeansClusterResponse runSequential(KMeansClusterRequest request) {
-        return processClusteringRequest(request, KMeansSequential::cluster);
+        return processClusteringRequest(request,
+                (data, k, maxIter, tol, seed, threads) -> KMeansSequential.cluster(data, k, maxIter, tol, seed));
     }
-    
+
     /**
      * Runs K-Means clustering using parallel algorithm.
      * 
@@ -65,9 +67,10 @@ public class KMeansClusteringService {
      * @return Clustering results
      */
     public KMeansClusterResponse runParallel(KMeansClusterRequest request) {
-        return processClusteringRequest(request, KMeansParallel::cluster);
+        return processClusteringRequest(request,
+                (data, k, maxIter, tol, seed, threads) -> KMeansParallel.cluster(data, k, maxIter, tol, seed, threads));
     }
-    
+
     /**
      * Runs K-Means clustering using concurrent algorithm.
      * 
@@ -75,7 +78,8 @@ public class KMeansClusteringService {
      * @return Clustering results
      */
     public KMeansClusterResponse runConcurrent(KMeansClusterRequest request) {
-        return processClusteringRequest(request, KMeansConcurrent::cluster);
+        return processClusteringRequest(request,
+                (data, k, maxIter, tol, seed, threads) -> KMeansConcurrent.cluster(data, k, maxIter, tol, seed, threads));
     }
     
     /**
@@ -114,6 +118,6 @@ public class KMeansClusteringService {
      */
     @FunctionalInterface
     private interface ClusteringAlgorithm {
-        KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed);
+        KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int threads);
     }
 }

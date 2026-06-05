@@ -1,7 +1,5 @@
 package com.example.backend.clustering.parallel;
 
-import com.example.backend.clustering.sequential.KMeansSequential;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.example.backend.clustering.core.KMeansCore;
+
 public final class KMeansParallel {
 
     private KMeansParallel() {}
@@ -20,7 +20,7 @@ public final class KMeansParallel {
      * Performs K-Means clustering using a parallel approach.
      * Creates and shuts down its own thread pool (used by the REST service layer).
      */
-    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed) {
         return cluster(data, k, maxIter, tol, seed, Runtime.getRuntime().availableProcessors());
     }
 
@@ -28,7 +28,7 @@ public final class KMeansParallel {
      * Creates a fixed thread pool of {@code numThreads}, runs clustering, then shuts the pool down.
      * Use this when you need a one-shot call and don't manage pool lifecycle yourself.
      */
-    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int numThreads) {
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed, int numThreads) {
         if (numThreads < 1) throw new IllegalArgumentException("numThreads must be at least 1");
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         try {
@@ -43,7 +43,7 @@ public final class KMeansParallel {
      * The pool is NOT shut down — the caller owns its lifecycle.
      * Use this in benchmarks to reuse one pool across many dataset runs.
      */
-    public static KMeansSequential.Result cluster(double[][] data, int k, int maxIter, double tol, long seed,
+    public static KMeansCore.Result cluster(double[][] data, int k, int maxIter, double tol, long seed,
                                                    ExecutorService executor) {
         // Validation
         if (data == null || data.length == 0)  throw new IllegalArgumentException("data must be non-empty");
@@ -87,7 +87,7 @@ public final class KMeansParallel {
 
         assignLabelsParallel(executor, numThreads, data, n, d, k, centroids, labels);
         double inertia = computeInertia(data, n, d, centroids, labels);
-        return new KMeansSequential.Result(centroids, labels, iter, inertia);
+        return new KMeansCore.Result(centroids, labels, iter, inertia);
     }
 
     // -------------------------------------------------------------------------
