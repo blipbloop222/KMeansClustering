@@ -6,20 +6,6 @@ import java.util.Random;
 
 public class DatasetGenerator {
 
-    //generate random dataset
-    public static double[][] generateRandom(int n, int d, long seed) {
-        Random r = new Random(seed);
-        double[][] data = new double[n][d];
-
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < d; j++) {
-                data[i][j] = r.nextDouble() * 1000;
-            }
-        }
-
-        return data;
-    }
-
     //generate clustered dataset
     public static double[][] generateClustered(int n, int d, int k, long seed) {
         Random r = new Random(seed);
