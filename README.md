@@ -245,3 +245,20 @@ KMeansClustering/
 │
 └── datasets/                         CSV datasets (synthetic + real-world)
 ```
+
+## Group Name
+
+```
+Concurrent A+
+```
+
+## Group Members
+
+```
+Denise Koh Wei Sin  23004977
+Kristern Lim Yu Xi  23004990
+Lei Wing Teng  23004953
+Chu Wei Lyn  23062837
+Ngo Kar Moon  22100721
+```
+
